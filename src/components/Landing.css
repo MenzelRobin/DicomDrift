@@ -29,6 +29,43 @@
   background-clip: text;
 }
 
+.resume-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 18px;
+  text-align: left;
+  border: 1px solid var(--accent);
+  transition: background 0.2s;
+}
+
+.resume-btn:hover {
+  background: rgba(85, 102, 238, 0.08);
+}
+
+.resume-btn svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.resume-btn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.resume-btn-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.resume-btn-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
 .subtitle {
   color: var(--text-secondary);
   margin-top: 8px;

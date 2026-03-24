@@ -11,5 +11,6 @@
   "howItWorks": "How it works",
   "step1": "Load your DICOM folder",
   "step2": "Select a series and configure parameters",
-  "step3": "Explore the 3D model"
+  "step3": "Explore the 3D model",
+  "resumeSession": "Resume last session"
 }
