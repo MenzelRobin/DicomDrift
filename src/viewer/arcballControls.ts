@@ -25,6 +25,7 @@ export interface ArcballState {
   panCurrent: THREE.Vector3
   distTarget: number
   distCurrent: number
+  homeDist: number
 }
 
 export function createArcballState(): ArcballState {
@@ -36,6 +37,7 @@ export function createArcballState(): ArcballState {
     panCurrent: new THREE.Vector3(),
     distTarget: HOME_DIST,
     distCurrent: HOME_DIST,
+    homeDist: HOME_DIST,
   }
 }
 
@@ -253,7 +255,17 @@ export function resetView(state: ArcballState) {
   state.targetQuat.copy(HOME_QUAT)
   state.velocityQuat.set(0, 0, 0, 1)
   state.panTarget.set(0, 0, 0)
-  state.distTarget = HOME_DIST
+  state.distTarget = state.homeDist
+}
+
+export function fitToSphere(state: ArcballState, radius: number) {
+  // Place camera far enough to see the whole bounding sphere
+  // FOV is 42deg, so half-angle is 21deg
+  const fovRad = (42 / 2) * (Math.PI / 180)
+  const dist = (radius / Math.sin(fovRad)) * 1.15 // 15% padding
+  state.homeDist = dist
+  state.distTarget = dist
+  state.distCurrent = dist
 }
 
 export function updateArcball(

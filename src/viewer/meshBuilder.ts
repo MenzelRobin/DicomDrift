@@ -7,11 +7,16 @@ export interface LayerMeshes {
   frontFace?: THREE.Mesh
 }
 
-export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
+export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes & { boundingSphere?: THREE.Sphere } {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(layer.vertices, 3))
   geometry.setIndex(new THREE.BufferAttribute(layer.indices, 1))
+
+  // Center geometry at origin so the pivot rotation works correctly
+  geometry.computeBoundingBox()
+  geometry.center()
   geometry.computeVertexNormals()
+  geometry.computeBoundingSphere()
 
   const color = new THREE.Color(layer.color)
   const isTransparent = layer.opacity < 0.98
@@ -19,8 +24,9 @@ export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
   if (!isTransparent) {
     const material = new THREE.MeshPhongMaterial({
       color,
-      shininess: 18,
-      specular: new THREE.Color(0x444444),
+      shininess: 20,
+      specular: new THREE.Color(0x555555),
+      emissive: new THREE.Color(0x111008),
       side: THREE.FrontSide,
       depthWrite: true,
     })
@@ -28,7 +34,7 @@ export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
     mesh.name = name
     mesh.renderOrder = 0
     mesh.visible = layer.visible
-    return { opaque: mesh }
+    return { opaque: mesh, boundingSphere: geometry.boundingSphere ?? undefined }
   }
 
   // Transparent: render back faces first, then front
@@ -58,7 +64,7 @@ export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
   frontMesh.renderOrder = 2
   frontMesh.visible = layer.visible
 
-  return { backFace: backMesh, frontFace: frontMesh }
+  return { backFace: backMesh, frontFace: frontMesh, boundingSphere: geometry.boundingSphere ?? undefined }
 }
 
 export function updateLayerVisibility(meshes: LayerMeshes, visible: boolean) {

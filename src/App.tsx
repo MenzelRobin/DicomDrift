@@ -61,7 +61,7 @@ export default function App() {
       bone: {
         vertices: mesh.vertices,
         indices: mesh.indices,
-        color: '#e8dcc8',
+        color: '#d4c4a8',
         opacity: 1.0,
         visible: true,
       },

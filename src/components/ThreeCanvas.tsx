@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useAppStore } from '../stores/useAppStore'
 import { createScene, resizeRenderer, disposeScene, type SceneContext } from '../viewer/sceneSetup'
-import { createArcballState, attachControls, updateArcball, resetView, type ArcballState } from '../viewer/arcballControls'
+import { createArcballState, attachControls, updateArcball, resetView, fitToSphere, type ArcballState } from '../viewer/arcballControls'
 import { buildLayerMesh, addMeshesToPivot, updateLayerVisibility, updateLayerOpacity, disposeMeshes, type LayerMeshes } from '../viewer/meshBuilder'
 
 export interface ThreeCanvasHandle {
@@ -105,6 +105,11 @@ export function ThreeCanvas({ onReady }: Props) {
         const meshes = buildLayerMesh(name, layer)
         addMeshesToPivot(ctx.pivot, meshes)
         currentMap.set(name, meshes)
+
+        // Auto-fit camera to first mesh added
+        if (meshes.boundingSphere && arcballRef.current) {
+          fitToSphere(arcballRef.current, meshes.boundingSphere.radius)
+        }
       }
     }
   }, [layers])
