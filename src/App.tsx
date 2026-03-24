@@ -120,10 +120,7 @@ export default function App() {
       )}
 
       {phase === 'viewing' && (
-        <Viewer onLoadNew={() => {
-          useAppStore.getState().resetToLanding()
-          terminateWorkers()
-        }} />
+        <Viewer onLoadNew={handleCancel} />
       )}
     </>
   )

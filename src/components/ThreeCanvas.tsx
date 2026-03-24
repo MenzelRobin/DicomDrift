@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useAppStore } from '../stores/useAppStore'
 import { createScene, resizeRenderer, disposeScene, type SceneContext } from '../viewer/sceneSetup'
 import { createArcballState, attachControls, updateArcball, resetView, fitToSphere, type ArcballState } from '../viewer/arcballControls'
-import { buildLayerMesh, addMeshesToPivot, updateLayerVisibility, updateLayerOpacity, disposeMeshes, type LayerMeshes } from '../viewer/meshBuilder'
+import { buildLayerMesh, removeMeshesFromParent, addMeshesToPivot, updateLayerVisibility, updateLayerOpacity, disposeMeshes, type LayerMeshes } from '../viewer/meshBuilder'
 
 export interface ThreeCanvasHandle {
   resetView: () => void
@@ -68,6 +68,7 @@ export function ThreeCanvas({ onReady }: Props) {
       cancelAnimationFrame(animFrameRef.current)
       detach()
       window.removeEventListener('resize', onResize)
+      // Only dispose meshes here — disposeScene handles renderer only
       currentMeshMap.forEach(disposeMeshes)
       currentMeshMap.clear()
       if (sceneRef.current) disposeScene(sceneRef.current)
@@ -85,9 +86,7 @@ export function ThreeCanvas({ onReady }: Props) {
     // Remove meshes for layers that no longer exist
     for (const [name, meshes] of currentMap) {
       if (!layers[name]) {
-        if (meshes.opaque) ctx.pivot.remove(meshes.opaque)
-        if (meshes.backFace) ctx.pivot.remove(meshes.backFace)
-        if (meshes.frontFace) ctx.pivot.remove(meshes.frontFace)
+        removeMeshesFromParent(meshes)
         disposeMeshes(meshes)
         currentMap.delete(name)
       }
@@ -97,9 +96,22 @@ export function ThreeCanvas({ onReady }: Props) {
     for (const [name, layer] of Object.entries(layers)) {
       const existing = currentMap.get(name)
       if (existing) {
-        // Update visibility and opacity
-        updateLayerVisibility(existing, layer.visible)
-        updateLayerOpacity(existing, layer.opacity)
+        // Check if transparency mode changed (opaque <-> transparent)
+        const wantsTransparent = layer.opacity < 0.98
+        const isCurrentlyTransparent = !existing.opaque
+
+        if (wantsTransparent !== isCurrentlyTransparent) {
+          // Rebuild meshes with correct material type
+          removeMeshesFromParent(existing)
+          disposeMeshes(existing)
+          currentMap.delete(name)
+          const newMeshes = buildLayerMesh(name, layer)
+          addMeshesToPivot(ctx.pivot, newMeshes)
+          currentMap.set(name, newMeshes)
+        } else {
+          updateLayerVisibility(existing, layer.visible)
+          updateLayerOpacity(existing, layer.opacity)
+        }
       } else {
         // Build new mesh
         const meshes = buildLayerMesh(name, layer)

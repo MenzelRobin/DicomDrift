@@ -5,9 +5,11 @@ export interface LayerMeshes {
   opaque?: THREE.Mesh
   backFace?: THREE.Mesh
   frontFace?: THREE.Mesh
+  boundingSphere?: THREE.Sphere
+  sharedGeometry?: THREE.BufferGeometry
 }
 
-export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes & { boundingSphere?: THREE.Sphere } {
+export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(layer.vertices, 3))
   geometry.setIndex(new THREE.BufferAttribute(layer.indices, 1))
@@ -34,10 +36,10 @@ export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes & { 
     mesh.name = name
     mesh.renderOrder = 0
     mesh.visible = layer.visible
-    return { opaque: mesh, boundingSphere: geometry.boundingSphere ?? undefined }
+    return { opaque: mesh, boundingSphere: geometry.boundingSphere ?? undefined, sharedGeometry: geometry }
   }
 
-  // Transparent: render back faces first, then front
+  // Transparent: share geometry between back and front passes (no clone needed)
   const backMaterial = new THREE.MeshPhongMaterial({
     color,
     opacity: layer.opacity,
@@ -59,12 +61,12 @@ export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes & { 
     side: THREE.FrontSide,
     depthWrite: false,
   })
-  const frontMesh = new THREE.Mesh(geometry.clone(), frontMaterial)
+  const frontMesh = new THREE.Mesh(geometry, frontMaterial)
   frontMesh.name = `${name}_front`
   frontMesh.renderOrder = 2
   frontMesh.visible = layer.visible
 
-  return { backFace: backMesh, frontFace: frontMesh, boundingSphere: geometry.boundingSphere ?? undefined }
+  return { backFace: backMesh, frontFace: frontMesh, boundingSphere: geometry.boundingSphere ?? undefined, sharedGeometry: geometry }
 }
 
 export function updateLayerVisibility(meshes: LayerMeshes, visible: boolean) {
@@ -90,13 +92,23 @@ export function addMeshesToPivot(pivot: THREE.Group, meshes: LayerMeshes) {
   if (meshes.frontFace) pivot.add(meshes.frontFace)
 }
 
+export function removeMeshesFromParent(meshes: LayerMeshes) {
+  if (meshes.opaque) meshes.opaque.removeFromParent()
+  if (meshes.backFace) meshes.backFace.removeFromParent()
+  if (meshes.frontFace) meshes.frontFace.removeFromParent()
+}
+
 export function disposeMeshes(meshes: LayerMeshes) {
-  const dispose = (m: THREE.Mesh) => {
-    m.geometry.dispose()
+  // Dispose shared geometry once
+  if (meshes.sharedGeometry) {
+    meshes.sharedGeometry.dispose()
+  }
+  // Dispose materials only (geometry already handled above)
+  const disposeMaterial = (m: THREE.Mesh) => {
     if (Array.isArray(m.material)) m.material.forEach((mat) => mat.dispose())
     else m.material.dispose()
   }
-  if (meshes.opaque) dispose(meshes.opaque)
-  if (meshes.backFace) dispose(meshes.backFace)
-  if (meshes.frontFace) dispose(meshes.frontFace)
+  if (meshes.opaque) disposeMaterial(meshes.opaque)
+  if (meshes.backFace) disposeMaterial(meshes.backFace)
+  if (meshes.frontFace) disposeMaterial(meshes.frontFace)
 }

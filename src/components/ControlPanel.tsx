@@ -33,8 +33,9 @@ export function ControlPanel({ onResetView, onLoadNew }: Props) {
             </button>
             {layer.opacity < 0.98 && (
               <div className="opacity-row">
-                <label className="opacity-label">{t('opacity')}</label>
+                <label className="opacity-label" htmlFor={`opacity-${name}`}>{t('opacity')}</label>
                 <input
+                  id={`opacity-${name}`}
                   type="range"
                   min="0.02"
                   max="1"
@@ -42,6 +43,7 @@ export function ControlPanel({ onResetView, onLoadNew }: Props) {
                   value={layer.opacity}
                   onChange={(e) => updateOpacity(name, parseFloat(e.target.value))}
                   className="opacity-slider"
+                  aria-label={`${t('opacity')} ${name}`}
                 />
               </div>
             )}

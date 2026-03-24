@@ -268,13 +268,16 @@ export function fitToSphere(state: ArcballState, radius: number) {
   state.distCurrent = dist
 }
 
+// Hoisted identity quaternion to avoid per-frame allocation
+const IDENTITY_QUAT = new THREE.Quaternion()
+
 export function updateArcball(
   state: ArcballState,
   pivot: THREE.Group,
   camera: THREE.PerspectiveCamera,
 ) {
   // Apply inertia
-  state.velocityQuat.slerp(new THREE.Quaternion(), 1 - DAMP)
+  state.velocityQuat.slerp(IDENTITY_QUAT, 1 - DAMP)
   if (Math.abs(1 - state.velocityQuat.w) > 0.0001) {
     state.targetQuat.premultiply(state.velocityQuat)
   }
