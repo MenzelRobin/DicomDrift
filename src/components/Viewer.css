@@ -1,0 +1,45 @@
+.viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.viewer-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 20px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.viewer-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.viewer-hint {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+@media (max-width: 600px) {
+  .viewer-hint {
+    bottom: calc(40vh + 8px);
+    white-space: normal;
+    max-width: 80vw;
+  }
+}

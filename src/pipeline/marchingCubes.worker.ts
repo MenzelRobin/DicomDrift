@@ -68,6 +68,10 @@ function marchingCubes(
   }
 
   function getVoxel(x: number, y: number, z: number): number {
+    // Treat boundary voxels as below any threshold to avoid edge artifacts
+    if (x <= 0 || y <= 0 || z <= 0 || x >= nx - 1 || y >= ny - 1 || z >= nz - 1) {
+      return -1024
+    }
     return volume[z * nx * ny + y * nx + x]
   }
 

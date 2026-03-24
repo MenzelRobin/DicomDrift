@@ -6,6 +6,7 @@ import type { DicomSlice, SeriesInfo, VolumeData } from './types/dicom'
 import { Landing } from './components/Landing'
 import { ProcessingOverlay } from './components/ProcessingOverlay'
 import { SeriesSelector } from './components/SeriesSelector'
+import { Viewer } from './components/Viewer'
 
 export default function App() {
   const { t } = useTranslation('common')
@@ -60,7 +61,7 @@ export default function App() {
       bone: {
         vertices: mesh.vertices,
         indices: mesh.indices,
-        color: '#e8dcc8',
+        color: '#d4c4a8',
         opacity: 1.0,
         visible: true,
       },
@@ -118,7 +119,9 @@ export default function App() {
         />
       )}
 
-      {phase === 'viewing' && <div>Viewer placeholder — mesh generated</div>}
+      {phase === 'viewing' && (
+        <Viewer onLoadNew={handleCancel} />
+      )}
     </>
   )
 }
