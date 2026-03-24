@@ -1,0 +1,15 @@
+{
+  "title": "DicomDrift",
+  "subtitle": "Gleite durch deine CT- & MRT-Aufnahmen in 3D",
+  "dropzone": "DICOM-Ordner hier ablegen",
+  "dropzoneHint": "oder klicken, um einen Ordner auszuwählen",
+  "selectFolder": "Ordner auswählen",
+  "loadSaved": "Gespeichertes Modell laden",
+  "privacyTitle": "Deine Daten bleiben privat",
+  "privacyText": "Die gesamte Verarbeitung erfolgt lokal in deinem Browser. Deine DICOM-Dateien werden niemals hochgeladen — es gibt keinen Server.",
+  "supportedFormats": "Unterstützt Standard-DICOM-Dateien von CT- und MRT-Scannern.",
+  "howItWorks": "So funktioniert's",
+  "step1": "Lade deinen DICOM-Ordner",
+  "step2": "Wähle eine Serie und konfiguriere die Parameter",
+  "step3": "Erkunde das 3D-Modell"
+}

@@ -1,0 +1,14 @@
+{
+  "save": "Speichern",
+  "load": "Laden",
+  "reset": "Zurücksetzen",
+  "cancel": "Abbrechen",
+  "settings": "Einstellungen",
+  "close": "Schließen",
+  "error": "Fehler",
+  "errorGeneric": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+  "errorFileRead": "Eine oder mehrere Dateien konnten nicht gelesen werden.",
+  "errorNoDicom": "Keine gültigen DICOM-Dateien gefunden.",
+  "errorNoSlices": "Nicht genügend Schichten, um ein Volumen zu erstellen.",
+  "language": "Sprache"
+}

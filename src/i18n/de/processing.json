@@ -1,0 +1,14 @@
+{
+  "title": "Verarbeitung",
+  "parsingDicom": "DICOM-Dateien werden gelesen...",
+  "parsingDicomProgress": "DICOM-Dateien werden gelesen ({{current}}/{{total}})...",
+  "buildingVolume": "Volumen wird erstellt...",
+  "selectingSeries": "Serie auswählen",
+  "generatingMesh": "3D-Modell wird erzeugt...",
+  "smoothingMesh": "Modell wird geglättet...",
+  "almostDone": "Fast fertig...",
+  "seriesSelection": "Mehrere Serien gefunden",
+  "seriesSlices": "{{count}} Schichten",
+  "seriesSelect": "Auswählen",
+  "cancel": "Abbrechen"
+}

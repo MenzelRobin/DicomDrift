@@ -1,0 +1,15 @@
+{
+  "title": "DicomDrift",
+  "subtitle": "Drift through your CT & MRI scans in 3D",
+  "dropzone": "Drop DICOM folder here",
+  "dropzoneHint": "or click to select a folder",
+  "selectFolder": "Select Folder",
+  "loadSaved": "Load Saved Model",
+  "privacyTitle": "Your data stays private",
+  "privacyText": "All processing happens locally in your browser. Your DICOM files are never uploaded anywhere — there is no server.",
+  "supportedFormats": "Supports standard DICOM files from CT and MRI scanners.",
+  "howItWorks": "How it works",
+  "step1": "Load your DICOM folder",
+  "step2": "Select a series and configure parameters",
+  "step3": "Explore the 3D model"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Processing",
+  "parsingDicom": "Parsing DICOM files...",
+  "parsingDicomProgress": "Parsing DICOM files ({{current}}/{{total}})...",
+  "buildingVolume": "Building volume...",
+  "selectingSeries": "Select a series",
+  "generatingMesh": "Generating 3D mesh...",
+  "smoothingMesh": "Smoothing mesh...",
+  "almostDone": "Almost done...",
+  "seriesSelection": "Multiple series found",
+  "seriesSlices": "{{count}} slices",
+  "seriesSelect": "Select",
+  "cancel": "Cancel"
+}

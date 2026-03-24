@@ -1,0 +1,14 @@
+{
+  "save": "Save",
+  "load": "Load",
+  "reset": "Reset",
+  "cancel": "Cancel",
+  "settings": "Settings",
+  "close": "Close",
+  "error": "Error",
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorFileRead": "Could not read one or more files.",
+  "errorNoDicom": "No valid DICOM files found.",
+  "errorNoSlices": "Not enough slices to build a volume.",
+  "language": "Language"
+}

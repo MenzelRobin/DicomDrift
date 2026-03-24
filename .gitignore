@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+
+# Vite
+*.local
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage/
+
+# DICOM data (never commit patient data)
+Example Dicom Input/
+*.dcm
+DICOMDIR
+
+# Prototype reference (not part of the app)
+Prototype-NNH-Viewer.html
+
+# OS
+Thumbs.db
