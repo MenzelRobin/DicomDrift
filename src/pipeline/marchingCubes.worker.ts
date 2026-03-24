@@ -227,7 +227,8 @@ function taubinSmooth(
 }
 
 self.onmessage = (e: MessageEvent<MarchingCubesMessage>) => {
-  const { volume, dimensions, spacing, isoThreshold, resolution, smoothIterations, invertNormals } = e.data
+  const { volume, dimensions, spacing, isoThreshold, smoothIterations, invertNormals } = e.data
+  const resolution = Math.max(1, Math.floor(e.data.resolution))
 
   try {
     postMsg({ type: 'progress', step: 'generatingMesh', percent: 0 })

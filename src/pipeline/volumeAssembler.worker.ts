@@ -162,6 +162,11 @@ function assembleWithSlices(
     const maxDepth = Math.floor(maxVoxels / (columns * rows))
     const cappedDepth = Math.min(newDepth, maxDepth)
 
+    if (cappedDepth < 2) {
+      // Too few slices after capping — skip resampling
+      volume = rawVolume
+    } else {
+
     postMsg({ type: 'progress', percent: 55 })
 
     const newVolume = new Int16Array(columns * rows * cappedDepth)
@@ -195,6 +200,8 @@ function assembleWithSlices(
     volume = newVolume
     finalDimensions = [columns, rows, cappedDepth]
     finalSpacing = [spacing[0], spacing[1], targetZSpacing]
+
+    } // end cappedDepth >= 2
   } else {
     volume = rawVolume
   }

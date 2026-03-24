@@ -58,20 +58,19 @@ interface LayerCardProps {
 function LayerCard({ config, hasGenerated, onRegenerate, onRemove }: LayerCardProps) {
   const { t } = useTranslation('viewer')
   const [expanded, setExpanded] = useState(true)
-  const [lastFingerprint, setLastFingerprint] = useState('')
   const updateConfig = useAppStore((s) => s.updateLayerConfig)
   const updateVisibility = useAppStore((s) => s.updateLayerVisibility)
   const layers = useAppStore((s) => s.layers)
 
   const isVisible = layers[config.id]?.visible ?? true
-  const currentFingerprint = `${config.threshold}:${config.opacity}:${config.smoothing}:${config.resolution}:${config.color}`
-  const isDirty = hasGenerated && lastFingerprint !== '' && currentFingerprint !== lastFingerprint
+  const currentFingerprint = `${config.threshold}:${config.opacity}:${config.smoothing}:${config.resolution}:${config.color}:${config.invertNormals}`
 
-  // Track the fingerprint when first generated externally
-  if (hasGenerated && lastFingerprint === '') {
-    // Use setTimeout to avoid state update during render
-    setTimeout(() => setLastFingerprint(currentFingerprint), 0)
-  }
+  // Track the fingerprint at time of last generation
+  // Initialize lazily: once generated, the first fingerprint becomes the baseline
+  const [lastFingerprint, setLastFingerprint] = useState(() =>
+    hasGenerated ? currentFingerprint : '',
+  )
+  const isDirty = hasGenerated && lastFingerprint !== '' && currentFingerprint !== lastFingerprint
 
   const handleGenerate = () => {
     setLastFingerprint(currentFingerprint)
@@ -273,20 +272,29 @@ export function LayerConfigurator() {
         config.invertNormals,
       )
 
+      // Guard: config may have been removed while generating
+      const store = useAppStore.getState()
+      const stillExists = store.layerConfigs.some((c) => c.id === config.id)
+      if (!stillExists) return
+
       if (mesh.indices.length > 50) {
-        useAppStore.getState().setLayer(config.id, {
+        const existingLayer = store.layers[config.id]
+        store.setLayer(config.id, {
           vertices: mesh.vertices,
           indices: mesh.indices,
           color: config.color,
           opacity: config.opacity,
-          visible: true,
+          visible: existingLayer?.visible ?? true,
         })
       }
     } catch (err) {
       console.warn(`Layer "${config.name}" generation failed:`, err)
     }
 
-    updateConfig(config.id, { generating: false })
+    // Guard again before updating config (may have been removed)
+    if (useAppStore.getState().layerConfigs.some((c) => c.id === config.id)) {
+      updateConfig(config.id, { generating: false })
+    }
   }, [volumeMeta, updateConfig])
 
   const addPreset = (key: string) => {

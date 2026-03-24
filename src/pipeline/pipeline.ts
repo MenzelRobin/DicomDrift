@@ -121,7 +121,7 @@ export function generateMesh(
     worker.onmessage = (e: MessageEvent<MarchingCubesResponse>) => {
       const msg = e.data
       if (msg.type === 'progress') {
-        const scaledPercent = Math.round(pOffset + (msg.percent ?? 0) * pScale)
+        const scaledPercent = Math.max(0, Math.min(100, Math.round(pOffset + (msg.percent ?? 0) * pScale)))
         setProgress({ step: msg.step ?? 'generatingMesh', percent: scaledPercent })
       } else if (msg.type === 'complete') {
         resolve({ vertices: msg.vertices!, indices: msg.indices! })

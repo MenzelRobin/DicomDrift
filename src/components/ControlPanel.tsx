@@ -19,7 +19,7 @@ export function ControlPanel({ onResetView, onSetView, onLoadNew }: Props) {
       <div className="cp-divider" />
 
       <div className="cp-views">
-        <span className="cp-views-label">View</span>
+        <span className="cp-views-label">{t('view', { defaultValue: 'View' })}</span>
         <div className="cp-views-grid">
           {Object.entries(VIEW_ORIENTATIONS).map(([key, view]) => (
             <button
@@ -27,6 +27,7 @@ export function ControlPanel({ onResetView, onSetView, onLoadNew }: Props) {
               className="cp-view-btn"
               onClick={() => onSetView(key)}
               title={view.label}
+              aria-label={view.label}
             >
               {view.icon}
             </button>

@@ -6,9 +6,10 @@ export interface SceneContext {
   camera: THREE.PerspectiveCamera
   pivot: THREE.Group
   envMap: THREE.Texture | null
+  envRenderTarget: THREE.WebGLRenderTarget | null
 }
 
-function generateEnvMap(renderer: THREE.WebGLRenderer): THREE.Texture {
+function generateEnvMap(renderer: THREE.WebGLRenderer): THREE.WebGLRenderTarget {
   // Create a simple gradient environment for subtle reflections
   const pmremGenerator = new THREE.PMREMGenerator(renderer)
   pmremGenerator.compileEquirectangularShader()
@@ -45,7 +46,7 @@ function generateEnvMap(renderer: THREE.WebGLRenderer): THREE.Texture {
   bgGeo.dispose()
   bgMat.dispose()
 
-  return renderTarget.texture
+  return renderTarget
 }
 
 export function createScene(canvas: HTMLCanvasElement): SceneContext {
@@ -53,7 +54,7 @@ export function createScene(canvas: HTMLCanvasElement): SceneContext {
     canvas,
     antialias: true,
     alpha: false,
-    preserveDrawingBuffer: true,
+    preserveDrawingBuffer: false,
   })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.setClearColor(0x080810, 1)
@@ -71,8 +72,8 @@ export function createScene(canvas: HTMLCanvasElement): SceneContext {
   scene.add(pivot)
 
   // Environment map for PBR reflections
-  const envMap = generateEnvMap(renderer)
-  scene.environment = envMap
+  const envRenderTarget = generateEnvMap(renderer)
+  scene.environment = envRenderTarget.texture
 
   // Hemisphere light for soft ambient (warm top, cool bottom)
   const hemi = new THREE.HemisphereLight(0xc8b898, 0x283848, 0.6)
@@ -93,7 +94,7 @@ export function createScene(canvas: HTMLCanvasElement): SceneContext {
   rim.position.set(0, -1, -2)
   scene.add(rim)
 
-  return { renderer, scene, camera, pivot, envMap }
+  return { renderer, scene, camera, pivot, envMap: envRenderTarget.texture, envRenderTarget }
 }
 
 export function resizeRenderer(ctx: SceneContext, width: number, height: number) {
@@ -104,5 +105,6 @@ export function resizeRenderer(ctx: SceneContext, width: number, height: number)
 
 export function disposeScene(ctx: SceneContext) {
   ctx.renderer.dispose()
+  ctx.envRenderTarget?.dispose()
   ctx.envMap?.dispose()
 }

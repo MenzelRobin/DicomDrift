@@ -196,7 +196,12 @@ export function VolumeHistogram({ threshold, onThresholdChange }: Props) {
         onPointerMove={(e) => {
           if (isDragging.current) handlePointer(e)
         }}
-        onPointerUp={() => { isDragging.current = false }}
+        onPointerUp={(e) => {
+          isDragging.current = false
+          ;(e.target as HTMLCanvasElement).releasePointerCapture(e.pointerId)
+        }}
+        onPointerCancel={() => { isDragging.current = false }}
+        onLostPointerCapture={() => { isDragging.current = false }}
       />
       <div className="vh-suggestions">
         {histData.suggestedThresholds.map((s) => (
