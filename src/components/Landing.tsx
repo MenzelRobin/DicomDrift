@@ -1,12 +1,14 @@
 import { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from '../stores/useAppStore'
 import './Landing.css'
 
-export function Landing() {
+interface Props {
+  onFilesSelected: (files: File[]) => void
+}
+
+export function Landing({ onFilesSelected }: Props) {
   const { t } = useTranslation('landing')
   const { t: tc } = useTranslation('common')
-  const setPhase = useAppStore((s) => s.setPhase)
   const folderInputRef = useRef<HTMLInputElement>(null)
   const modelInputRef = useRef<HTMLInputElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -26,11 +28,9 @@ export function Landing() {
         alert(tc('errorNoDicom'))
         return
       }
-      // TODO: Pass files to pipeline orchestrator
-      console.log(`Loaded ${fileArray.length} files`)
-      setPhase('processing')
+      onFilesSelected(fileArray)
     },
-    [setPhase, tc],
+    [onFilesSelected, tc],
   )
 
   const handleDrop = useCallback(
