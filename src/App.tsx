@@ -6,6 +6,7 @@ import type { DicomSlice, SeriesInfo, VolumeData } from './types/dicom'
 import { Landing } from './components/Landing'
 import { ProcessingOverlay } from './components/ProcessingOverlay'
 import { SeriesSelector } from './components/SeriesSelector'
+import { Viewer } from './components/Viewer'
 
 export default function App() {
   const { t } = useTranslation('common')
@@ -118,7 +119,12 @@ export default function App() {
         />
       )}
 
-      {phase === 'viewing' && <div>Viewer placeholder — mesh generated</div>}
+      {phase === 'viewing' && (
+        <Viewer onLoadNew={() => {
+          useAppStore.getState().resetToLanding()
+          terminateWorkers()
+        }} />
+      )}
     </>
   )
 }
