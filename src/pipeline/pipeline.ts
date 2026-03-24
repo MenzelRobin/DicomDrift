@@ -1,8 +1,10 @@
-import type { DicomSlice, DicomParserResponse, SeriesInfo, VolumeAssemblerResponse, VolumeData } from '../types/dicom'
+import type { DicomSlice, DicomParserResponse, SeriesInfo, VolumeAssemblerResponse, VolumeData, MeshResult } from '../types/dicom'
+import type { MarchingCubesResponse } from './marchingCubes.worker'
 import { useAppStore } from '../stores/useAppStore'
 
 let dicomWorker: Worker | null = null
 let volumeWorker: Worker | null = null
+let mcWorker: Worker | null = null
 
 function getDicomWorker(): Worker {
   if (!dicomWorker) {
@@ -89,9 +91,59 @@ export function assembleVolume(slices: DicomSlice[], seriesUID: string): Promise
   })
 }
 
+function getMcWorker(): Worker {
+  if (!mcWorker) {
+    mcWorker = new Worker(
+      new URL('./marchingCubes.worker.ts', import.meta.url),
+      { type: 'module' },
+    )
+  }
+  return mcWorker
+}
+
+export function generateMesh(
+  volume: Int16Array,
+  dimensions: [number, number, number],
+  spacing: [number, number, number],
+  isoThreshold: number,
+  resolution: 1 | 2 | 4,
+  smoothIterations: number,
+): Promise<MeshResult> {
+  const { setProgress } = useAppStore.getState()
+
+  return new Promise((resolve, reject) => {
+    const worker = getMcWorker()
+
+    worker.onmessage = (e: MessageEvent<MarchingCubesResponse>) => {
+      const msg = e.data
+      if (msg.type === 'progress') {
+        setProgress({ step: msg.step ?? 'generatingMesh', percent: msg.percent ?? 0 })
+      } else if (msg.type === 'complete') {
+        resolve({ vertices: msg.vertices!, indices: msg.indices! })
+      } else if (msg.type === 'error') {
+        reject(new Error(msg.message))
+      }
+    }
+
+    worker.onerror = (err) => reject(new Error(err.message))
+
+    worker.postMessage({
+      type: 'generate',
+      volume,
+      dimensions,
+      spacing,
+      isoThreshold,
+      resolution,
+      smoothIterations,
+    })
+  })
+}
+
 export function terminateWorkers() {
   dicomWorker?.terminate()
   dicomWorker = null
   volumeWorker?.terminate()
   volumeWorker = null
+  mcWorker?.terminate()
+  mcWorker = null
 }

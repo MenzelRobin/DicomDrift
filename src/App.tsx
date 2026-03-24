@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from './stores/useAppStore'
-import { parseFiles, assembleVolume, terminateWorkers } from './pipeline/pipeline'
-import type { DicomSlice, SeriesInfo } from './types/dicom'
+import { parseFiles, assembleVolume, generateMesh, terminateWorkers } from './pipeline/pipeline'
+import type { DicomSlice, SeriesInfo, VolumeData } from './types/dicom'
 import { Landing } from './components/Landing'
 import { ProcessingOverlay } from './components/ProcessingOverlay'
 import { SeriesSelector } from './components/SeriesSelector'
@@ -12,7 +12,7 @@ export default function App() {
   const phase = useAppStore((s) => s.phase)
   const setPhase = useAppStore((s) => s.setPhase)
   const setProgress = useAppStore((s) => s.setProgress)
-  const setCachedVolume = useAppStore((s) => s.setCachedVolume)
+  const setLayers = useAppStore((s) => s.setLayers)
 
   const [parsedSlices, setParsedSlices] = useState<DicomSlice[] | null>(null)
   const [seriesList, setSeriesList] = useState<SeriesInfo[] | null>(null)
@@ -43,21 +43,47 @@ export default function App() {
     [],
   )
 
+  const runMeshGeneration = async (volumeData: VolumeData) => {
+    const { params } = useAppStore.getState()
+    setProgress({ step: 'generatingMesh', percent: 0 })
+
+    const mesh = await generateMesh(
+      volumeData.volume,
+      volumeData.dimensions,
+      volumeData.spacing,
+      params.isoThreshold,
+      params.resolution,
+      params.smoothIterations,
+    )
+
+    setLayers({
+      bone: {
+        vertices: mesh.vertices,
+        indices: mesh.indices,
+        color: '#e8dcc8',
+        opacity: 1.0,
+        visible: true,
+      },
+    })
+  }
+
   const processVolume = async (slices: DicomSlice[], seriesUID: string) => {
     setShowSeriesSelector(false)
     setProgress({ step: 'buildingVolume', percent: 0 })
 
     try {
       const volumeData = await assembleVolume(slices, seriesUID)
-      setCachedVolume(volumeData.volume.buffer as ArrayBuffer)
+      useAppStore.setState({
+        cachedVolume: volumeData.volume.buffer as ArrayBuffer,
+        volumeMeta: volumeData,
+      })
 
-      // Store volume metadata for the marching cubes phase
-      useAppStore.setState({ volumeMeta: volumeData })
+      await runMeshGeneration(volumeData)
 
       setProgress(null)
       setPhase('viewing')
     } catch (err) {
-      console.error('Volume assembly error:', err)
+      console.error('Pipeline error:', err)
       alert(t('errorGeneric'))
       handleCancel()
     }
@@ -92,7 +118,7 @@ export default function App() {
         />
       )}
 
-      {phase === 'viewing' && <div>Viewer placeholder</div>}
+      {phase === 'viewing' && <div>Viewer placeholder — mesh generated</div>}
     </>
   )
 }
