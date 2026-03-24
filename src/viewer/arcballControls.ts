@@ -10,12 +10,42 @@ const TOUCH_SPEED = 2.0
 const MIN_DIST = 25
 const MAX_DIST = 700
 
-// DICOM HFS: 90deg around Z maps Superior (X+) to up (Y+)
-const HOME_QUAT = new THREE.Quaternion().setFromAxisAngle(
-  new THREE.Vector3(0, 0, 1),
-  Math.PI / 2,
-)
 const HOME_DIST = 195
+
+// DICOM HFS coordinate system:
+//   X+ = Patient Left, Y+ = Patient Posterior, Z+ = Patient Superior
+// Camera sits at (0, 0, dist) looking at origin. Screen up = Y+, right = X+.
+// View orientations rotate the MODEL so the correct face points at camera.
+function quatFromMatrix(
+  sx: [number, number, number],
+  sy: [number, number, number],
+  sz: [number, number, number],
+): THREE.Quaternion {
+  const m = new THREE.Matrix4().set(
+    sx[0], sy[0], sz[0], 0,
+    sx[1], sy[1], sz[1], 0,
+    sx[2], sy[2], sz[2], 0,
+    0, 0, 0, 1,
+  )
+  return new THREE.Quaternion().setFromRotationMatrix(m)
+}
+
+export const VIEW_ORIENTATIONS: Record<string, { quat: THREE.Quaternion; label: string; icon: string }> = {
+  // Anterior (face): DICOM-X→screenX, DICOM-Z→screenY (up), -DICOM-Y→screenZ (toward cam)
+  anterior: { quat: quatFromMatrix([1, 0, 0], [0, 0, 1], [0, -1, 0]), label: 'Anterior', icon: 'A' },
+  // Posterior (back of head): -DICOM-X→screenX, DICOM-Z→screenY, DICOM-Y→screenZ
+  posterior: { quat: quatFromMatrix([-1, 0, 0], [0, 0, 1], [0, 1, 0]), label: 'Posterior', icon: 'P' },
+  // Right (patient's right ear): DICOM-Y→screenX, DICOM-Z→screenY, DICOM-X→screenZ
+  right: { quat: quatFromMatrix([0, -1, 0], [0, 0, 1], [-1, 0, 0]), label: 'Right', icon: 'R' },
+  // Left (patient's left ear): -DICOM-Y→screenX, DICOM-Z→screenY, -DICOM-X→screenZ
+  left: { quat: quatFromMatrix([0, 1, 0], [0, 0, 1], [1, 0, 0]), label: 'Left', icon: 'L' },
+  // Superior (top of head): DICOM-X→screenX, -DICOM-Y→screenY, -DICOM-Z→screenZ
+  superior: { quat: quatFromMatrix([1, 0, 0], [0, -1, 0], [0, 0, -1]), label: 'Superior', icon: 'S' },
+  // Inferior (chin): DICOM-X→screenX, DICOM-Y→screenY, DICOM-Z→screenZ
+  inferior: { quat: quatFromMatrix([1, 0, 0], [0, 1, 0], [0, 0, 1]), label: 'Inferior', icon: 'I' },
+}
+
+const HOME_QUAT = VIEW_ORIENTATIONS.anterior.quat.clone()
 
 export interface ArcballState {
   currentQuat: THREE.Quaternion
@@ -258,6 +288,14 @@ export function resetView(state: ArcballState) {
   state.distTarget = state.homeDist
 }
 
+export function setView(state: ArcballState, name: string) {
+  const view = VIEW_ORIENTATIONS[name]
+  if (!view) return
+  state.targetQuat.copy(view.quat)
+  state.velocityQuat.set(0, 0, 0, 1)
+  state.panTarget.set(0, 0, 0)
+}
+
 export function fitToSphere(state: ArcballState, radius: number) {
   // Place camera far enough to see the whole bounding sphere
   // FOV is 42deg, so half-angle is 21deg
@@ -266,6 +304,9 @@ export function fitToSphere(state: ArcballState, radius: number) {
   state.homeDist = dist
   state.distTarget = dist
   state.distCurrent = dist
+  // Reset pan so model stays centered after regeneration
+  state.panTarget.set(0, 0, 0)
+  state.panCurrent.set(0, 0, 0)
 }
 
 // Hoisted identity quaternion to avoid per-frame allocation

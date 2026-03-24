@@ -23,6 +23,10 @@ export function Viewer({ onLoadNew }: Props) {
     handleRef.current?.resetView()
   }, [])
 
+  const onSetView = useCallback((name: string) => {
+    handleRef.current?.setView(name)
+  }, [])
+
   return (
     <div className="viewer">
       <div className="viewer-topbar">
@@ -31,7 +35,7 @@ export function Viewer({ onLoadNew }: Props) {
 
       <ThreeCanvas onReady={onReady} />
 
-      <ControlPanel onResetView={onResetView} onLoadNew={onLoadNew} />
+      <ControlPanel onResetView={onResetView} onSetView={onSetView} onLoadNew={onLoadNew} />
 
       <div className="viewer-hint">
         {isTouchDevice ? t('hintTouch') : t('hintMouse')}

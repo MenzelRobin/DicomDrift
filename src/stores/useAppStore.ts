@@ -11,10 +11,16 @@ export interface LayerData {
   visible: boolean
 }
 
-export interface MeshParams {
-  isoThreshold: number
-  resolution: 1 | 2 | 4
-  smoothIterations: number
+export interface LayerConfig {
+  id: string
+  name: string
+  threshold: number
+  color: string
+  opacity: number
+  resolution: number
+  smoothing: number
+  invertNormals: boolean
+  generating: boolean
 }
 
 export interface ProgressInfo {
@@ -26,61 +32,93 @@ interface AppState {
   phase: Phase
   progress: ProgressInfo | null
   layers: Record<string, LayerData>
-  params: MeshParams
+  layerConfigs: LayerConfig[]
   cachedVolume: ArrayBuffer | null
   volumeMeta: VolumeData | null
 
   setPhase: (phase: Phase) => void
   setProgress: (progress: ProgressInfo | null) => void
   setLayers: (layers: Record<string, LayerData>) => void
-  updateLayerVisibility: (name: string, visible: boolean) => void
-  updateLayerOpacity: (name: string, opacity: number) => void
-  setParams: (params: Partial<MeshParams>) => void
+  setLayer: (id: string, data: LayerData) => void
+  removeLayer: (id: string) => void
+  updateLayerVisibility: (id: string, visible: boolean) => void
+  updateLayerOpacity: (id: string, opacity: number) => void
+
+  setLayerConfigs: (configs: LayerConfig[]) => void
+  updateLayerConfig: (id: string, update: Partial<LayerConfig>) => void
+  addLayerConfig: (config: LayerConfig) => void
+  removeLayerConfig: (id: string) => void
+
   setCachedVolume: (volume: ArrayBuffer | null) => void
   resetToLanding: () => void
 }
 
-const DEFAULT_PARAMS: MeshParams = {
-  isoThreshold: 300,
-  resolution: 2,
-  smoothIterations: 3,
+export const DEFAULT_LAYER_CONFIGS: LayerConfig[] = [
+  { id: 'bone', name: 'Bone', threshold: 200, color: '#d4c4a8', opacity: 1.0, resolution: 2, smoothing: 5, invertNormals: true, generating: false },
+]
+
+export const PRESET_LAYERS: Record<string, Omit<LayerConfig, 'id' | 'generating'>> = {
+  bone: { name: 'Bone', threshold: 200, color: '#d4c4a8', opacity: 1.0, resolution: 2, smoothing: 5, invertNormals: true },
+  softTissue: { name: 'Soft Tissue', threshold: -100, color: '#c4988a', opacity: 0.35, resolution: 2, smoothing: 10, invertNormals: true },
+  skin: { name: 'Skin', threshold: -300, color: '#d4a89c', opacity: 0.15, resolution: 2, smoothing: 15, invertNormals: true },
 }
 
 export const useAppStore = create<AppState>((set) => ({
   phase: 'landing',
   progress: null,
   layers: {},
-  params: DEFAULT_PARAMS,
+  layerConfigs: [...DEFAULT_LAYER_CONFIGS],
   cachedVolume: null,
   volumeMeta: null,
 
   setPhase: (phase) => set({ phase }),
   setProgress: (progress) => set({ progress }),
   setLayers: (layers) => set({ layers }),
-  updateLayerVisibility: (name, visible) =>
+  setLayer: (id, data) =>
+    set((state) => ({ layers: { ...state.layers, [id]: data } })),
+  removeLayer: (id) =>
+    set((state) => {
+      const { [id]: _removed, ...rest } = state.layers
+      void _removed
+      return { layers: rest }
+    }),
+  updateLayerVisibility: (id, visible) =>
     set((state) => ({
       layers: {
         ...state.layers,
-        [name]: { ...state.layers[name], visible },
+        [id]: { ...state.layers[id], visible },
       },
     })),
-  updateLayerOpacity: (name, opacity) =>
+  updateLayerOpacity: (id, opacity) =>
     set((state) => ({
       layers: {
         ...state.layers,
-        [name]: { ...state.layers[name], opacity },
+        [id]: { ...state.layers[id], opacity },
       },
     })),
-  setParams: (params) =>
-    set((state) => ({ params: { ...state.params, ...params } })),
+
+  setLayerConfigs: (layerConfigs) => set({ layerConfigs }),
+  updateLayerConfig: (id, update) =>
+    set((state) => ({
+      layerConfigs: state.layerConfigs.map((c) =>
+        c.id === id ? { ...c, ...update } : c,
+      ),
+    })),
+  addLayerConfig: (config) =>
+    set((state) => ({ layerConfigs: [...state.layerConfigs, config] })),
+  removeLayerConfig: (id) =>
+    set((state) => ({
+      layerConfigs: state.layerConfigs.filter((c) => c.id !== id),
+    })),
+
   setCachedVolume: (cachedVolume) => set({ cachedVolume }),
   resetToLanding: () =>
     set({
       phase: 'landing',
       progress: null,
       layers: {},
+      layerConfigs: [...DEFAULT_LAYER_CONFIGS],
       cachedVolume: null,
       volumeMeta: null,
-      params: DEFAULT_PARAMS,
     }),
 }))

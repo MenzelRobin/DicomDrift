@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from './stores/useAppStore'
+import { useAppStore, DEFAULT_LAYER_CONFIGS } from './stores/useAppStore'
 import { parseFiles, assembleVolume, generateMesh, terminateWorkers } from './pipeline/pipeline'
-import type { DicomSlice, SeriesInfo, VolumeData } from './types/dicom'
+import type { DicomSlice, SeriesInfo } from './types/dicom'
 import { Landing } from './components/Landing'
 import { ProcessingOverlay } from './components/ProcessingOverlay'
 import { SeriesSelector } from './components/SeriesSelector'
@@ -13,7 +13,6 @@ export default function App() {
   const phase = useAppStore((s) => s.phase)
   const setPhase = useAppStore((s) => s.setPhase)
   const setProgress = useAppStore((s) => s.setProgress)
-  const setLayers = useAppStore((s) => s.setLayers)
 
   const [parsedSlices, setParsedSlices] = useState<DicomSlice[] | null>(null)
   const [seriesList, setSeriesList] = useState<SeriesInfo[] | null>(null)
@@ -44,30 +43,6 @@ export default function App() {
     [],
   )
 
-  const runMeshGeneration = async (volumeData: VolumeData) => {
-    const { params } = useAppStore.getState()
-    setProgress({ step: 'generatingMesh', percent: 0 })
-
-    const mesh = await generateMesh(
-      volumeData.volume,
-      volumeData.dimensions,
-      volumeData.spacing,
-      params.isoThreshold,
-      params.resolution,
-      params.smoothIterations,
-    )
-
-    setLayers({
-      bone: {
-        vertices: mesh.vertices,
-        indices: mesh.indices,
-        color: '#d4c4a8',
-        opacity: 1.0,
-        visible: true,
-      },
-    })
-  }
-
   const processVolume = async (slices: DicomSlice[], seriesUID: string) => {
     setShowSeriesSelector(false)
     setProgress({ step: 'buildingVolume', percent: 0 })
@@ -79,7 +54,27 @@ export default function App() {
         volumeMeta: volumeData,
       })
 
-      await runMeshGeneration(volumeData)
+      // Generate initial bone layer from default config
+      const defaultConfig = DEFAULT_LAYER_CONFIGS[0]
+      setProgress({ step: 'generatingMesh', percent: 0 })
+
+      const mesh = await generateMesh(
+        volumeData.volume,
+        volumeData.dimensions,
+        volumeData.spacing,
+        defaultConfig.threshold,
+        defaultConfig.resolution,
+        defaultConfig.smoothing,
+        defaultConfig.invertNormals,
+      )
+
+      useAppStore.getState().setLayer(defaultConfig.id, {
+        vertices: mesh.vertices,
+        indices: mesh.indices,
+        color: defaultConfig.color,
+        opacity: defaultConfig.opacity,
+        visible: true,
+      })
 
       setProgress(null)
       setPhase('viewing')

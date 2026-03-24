@@ -6,8 +6,9 @@ export interface MarchingCubesMessage {
   dimensions: [number, number, number]
   spacing: [number, number, number]
   isoThreshold: number
-  resolution: 1 | 2 | 4
+  resolution: number
   smoothIterations: number
+  invertNormals: boolean
 }
 
 export interface MarchingCubesResponse {
@@ -45,6 +46,7 @@ function marchingCubes(
   volume: Int16Array,
   dims: [number, number, number],
   spacing: [number, number, number],
+  flipWinding: boolean,
   iso: number,
   step: number,
 ): { vertices: number[]; indices: number[] } {
@@ -143,7 +145,11 @@ function marchingCubes(
           const i0 = addVertex(e0[0], e0[1], e0[2])
           const i1 = addVertex(e1[0], e1[1], e1[2])
           const i2 = addVertex(e2[0], e2[1], e2[2])
-          indices.push(i0, i1, i2)
+          if (flipWinding) {
+            indices.push(i0, i2, i1)
+          } else {
+            indices.push(i0, i1, i2)
+          }
         }
 
         processedCubes++
@@ -159,7 +165,9 @@ function marchingCubes(
   return { vertices, indices }
 }
 
-function laplacianSmooth(
+// Taubin smoothing: alternates shrink (lambda) and inflate (mu) passes
+// to smooth without shrinking the mesh (unlike plain Laplacian)
+function taubinSmooth(
   vertices: Float32Array,
   indices: Uint32Array,
   iterations: number,
@@ -167,6 +175,8 @@ function laplacianSmooth(
   if (iterations <= 0) return
 
   const vertexCount = vertices.length / 3
+  const lambda = 0.5
+  const mu = -0.53 // slightly stronger inflate than shrink → volume preservation
 
   // Build adjacency list
   const neighbors: Set<number>[] = new Array(vertexCount)
@@ -179,11 +189,8 @@ function laplacianSmooth(
     neighbors[c].add(a); neighbors[c].add(b)
   }
 
-  const lambda = 0.5
-
-  for (let iter = 0; iter < iterations; iter++) {
+  function smoothPass(factor: number) {
     const newPositions = new Float32Array(vertices.length)
-
     for (let i = 0; i < vertexCount; i++) {
       const adj = neighbors[i]
       if (adj.size === 0) {
@@ -192,7 +199,6 @@ function laplacianSmooth(
         newPositions[i * 3 + 2] = vertices[i * 3 + 2]
         continue
       }
-
       let avgX = 0, avgY = 0, avgZ = 0
       for (const j of adj) {
         avgX += vertices[j * 3]
@@ -201,13 +207,16 @@ function laplacianSmooth(
       }
       const n = adj.size
       avgX /= n; avgY /= n; avgZ /= n
-
-      newPositions[i * 3] = vertices[i * 3] + lambda * (avgX - vertices[i * 3])
-      newPositions[i * 3 + 1] = vertices[i * 3 + 1] + lambda * (avgY - vertices[i * 3 + 1])
-      newPositions[i * 3 + 2] = vertices[i * 3 + 2] + lambda * (avgZ - vertices[i * 3 + 2])
+      newPositions[i * 3] = vertices[i * 3] + factor * (avgX - vertices[i * 3])
+      newPositions[i * 3 + 1] = vertices[i * 3 + 1] + factor * (avgY - vertices[i * 3 + 1])
+      newPositions[i * 3 + 2] = vertices[i * 3 + 2] + factor * (avgZ - vertices[i * 3 + 2])
     }
-
     vertices.set(newPositions)
+  }
+
+  for (let iter = 0; iter < iterations; iter++) {
+    smoothPass(lambda)  // shrink
+    smoothPass(mu)      // inflate
 
     postMsg({
       type: 'progress',
@@ -218,13 +227,14 @@ function laplacianSmooth(
 }
 
 self.onmessage = (e: MessageEvent<MarchingCubesMessage>) => {
-  const { volume, dimensions, spacing, isoThreshold, resolution, smoothIterations } = e.data
+  const { volume, dimensions, spacing, isoThreshold, smoothIterations, invertNormals } = e.data
+  const resolution = Math.max(1, Math.floor(e.data.resolution))
 
   try {
     postMsg({ type: 'progress', step: 'generatingMesh', percent: 0 })
 
     const { vertices: rawVerts, indices: rawIndices } = marchingCubes(
-      volume, dimensions, spacing, isoThreshold, resolution,
+      volume, dimensions, spacing, invertNormals, isoThreshold, resolution,
     )
 
     if (rawIndices.length === 0) {
@@ -237,7 +247,7 @@ self.onmessage = (e: MessageEvent<MarchingCubesMessage>) => {
 
     postMsg({ type: 'progress', step: 'smoothingMesh', percent: 80 })
 
-    laplacianSmooth(vertices, indices, smoothIterations)
+    taubinSmooth(vertices, indices, smoothIterations)
 
     postMsg({ type: 'progress', step: 'smoothingMesh', percent: 100 })
 

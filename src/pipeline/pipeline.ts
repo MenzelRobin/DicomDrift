@@ -106,10 +106,14 @@ export function generateMesh(
   dimensions: [number, number, number],
   spacing: [number, number, number],
   isoThreshold: number,
-  resolution: 1 | 2 | 4,
+  resolution: number,
   smoothIterations: number,
+  invertNormals = true,
+  progressRange?: { offset: number; scale: number },
 ): Promise<MeshResult> {
   const { setProgress } = useAppStore.getState()
+  const pOffset = progressRange?.offset ?? 0
+  const pScale = progressRange?.scale ?? 1
 
   return new Promise((resolve, reject) => {
     const worker = getMcWorker()
@@ -117,7 +121,8 @@ export function generateMesh(
     worker.onmessage = (e: MessageEvent<MarchingCubesResponse>) => {
       const msg = e.data
       if (msg.type === 'progress') {
-        setProgress({ step: msg.step ?? 'generatingMesh', percent: msg.percent ?? 0 })
+        const scaledPercent = Math.max(0, Math.min(100, Math.round(pOffset + (msg.percent ?? 0) * pScale)))
+        setProgress({ step: msg.step ?? 'generatingMesh', percent: scaledPercent })
       } else if (msg.type === 'complete') {
         resolve({ vertices: msg.vertices!, indices: msg.indices! })
       } else if (msg.type === 'error') {
@@ -135,6 +140,7 @@ export function generateMesh(
       isoThreshold,
       resolution,
       smoothIterations,
+      invertNormals,
     })
   })
 }

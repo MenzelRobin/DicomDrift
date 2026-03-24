@@ -1,61 +1,54 @@
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from '../stores/useAppStore'
+import { VIEW_ORIENTATIONS } from '../viewer/arcballControls'
+import { LayerConfigurator } from './LayerConfigurator'
 import './ControlPanel.css'
 
 interface Props {
   onResetView: () => void
+  onSetView: (name: string) => void
   onLoadNew: () => void
 }
 
-export function ControlPanel({ onResetView, onLoadNew }: Props) {
+export function ControlPanel({ onResetView, onSetView, onLoadNew }: Props) {
   const { t } = useTranslation('viewer')
-  const layers = useAppStore((s) => s.layers)
-  const updateVisibility = useAppStore((s) => s.updateLayerVisibility)
-  const updateOpacity = useAppStore((s) => s.updateLayerOpacity)
-
-  const layerEntries = Object.entries(layers)
 
   return (
     <div className="control-panel glass">
-      <div className="panel-section">
-        <h3 className="panel-title">{t('layers')}</h3>
-        {layerEntries.map(([name, layer]) => (
-          <div key={name} className="layer-row">
+      <LayerConfigurator />
+
+      <div className="cp-divider" />
+
+      <div className="cp-views">
+        <span className="cp-views-label">{t('view', { defaultValue: 'View' })}</span>
+        <div className="cp-views-grid">
+          {Object.entries(VIEW_ORIENTATIONS).map(([key, view]) => (
             <button
-              className={`layer-toggle ${layer.visible ? 'layer-toggle--active' : ''}`}
-              onClick={() => updateVisibility(name, !layer.visible)}
+              key={key}
+              className="cp-view-btn"
+              onClick={() => onSetView(key)}
+              title={view.label}
+              aria-label={view.label}
             >
-              <span
-                className="layer-dot"
-                style={{ background: layer.visible ? layer.color : 'transparent', borderColor: layer.color }}
-              />
-              <span className="layer-name">{name}</span>
+              {view.icon}
             </button>
-            {layer.opacity < 0.98 && (
-              <div className="opacity-row">
-                <label className="opacity-label" htmlFor={`opacity-${name}`}>{t('opacity')}</label>
-                <input
-                  id={`opacity-${name}`}
-                  type="range"
-                  min="0.02"
-                  max="1"
-                  step="0.01"
-                  value={layer.opacity}
-                  onChange={(e) => updateOpacity(name, parseFloat(e.target.value))}
-                  className="opacity-slider"
-                  aria-label={`${t('opacity')} ${name}`}
-                />
-              </div>
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div className="panel-section panel-actions">
-        <button className="btn btn-panel" onClick={onResetView}>
+      <div className="cp-actions">
+        <button className="cp-action-btn" onClick={onResetView}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
           {t('resetView')}
         </button>
-        <button className="btn btn-panel btn-panel--muted" onClick={onLoadNew}>
+        <button className="cp-action-btn cp-action-btn--muted" onClick={onLoadNew}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
           {t('loadNewData')}
         </button>
       </div>

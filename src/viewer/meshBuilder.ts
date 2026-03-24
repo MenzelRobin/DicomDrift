@@ -9,14 +9,25 @@ export interface LayerMeshes {
   sharedGeometry?: THREE.BufferGeometry
 }
 
+// Shared center offset so all layers align to the same origin
+let sharedCenter: THREE.Vector3 | null = null
+
+export function resetSharedCenter() {
+  sharedCenter = null
+}
+
 export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(layer.vertices, 3))
   geometry.setIndex(new THREE.BufferAttribute(layer.indices, 1))
 
-  // Center geometry at origin so the pivot rotation works correctly
+  // Center all layers to the same origin (first layer determines the center)
   geometry.computeBoundingBox()
-  geometry.center()
+  if (!sharedCenter) {
+    sharedCenter = new THREE.Vector3()
+    geometry.boundingBox!.getCenter(sharedCenter)
+  }
+  geometry.translate(-sharedCenter.x, -sharedCenter.y, -sharedCenter.z)
   geometry.computeVertexNormals()
   geometry.computeBoundingSphere()
 
@@ -24,11 +35,11 @@ export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
   const isTransparent = layer.opacity < 0.98
 
   if (!isTransparent) {
-    const material = new THREE.MeshPhongMaterial({
+    const material = new THREE.MeshStandardMaterial({
       color,
-      shininess: 20,
-      specular: new THREE.Color(0x555555),
-      emissive: new THREE.Color(0x111008),
+      roughness: 0.65,
+      metalness: 0.05,
+      envMapIntensity: 0.4,
       side: THREE.FrontSide,
       depthWrite: true,
     })
@@ -40,11 +51,13 @@ export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
   }
 
   // Transparent: share geometry between back and front passes (no clone needed)
-  const backMaterial = new THREE.MeshPhongMaterial({
+  const backMaterial = new THREE.MeshStandardMaterial({
     color,
     opacity: layer.opacity,
     transparent: true,
-    shininess: 8,
+    roughness: 0.7,
+    metalness: 0.0,
+    envMapIntensity: 0.2,
     side: THREE.BackSide,
     depthWrite: false,
   })
@@ -53,11 +66,13 @@ export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
   backMesh.renderOrder = 1
   backMesh.visible = layer.visible
 
-  const frontMaterial = new THREE.MeshPhongMaterial({
+  const frontMaterial = new THREE.MeshStandardMaterial({
     color,
     opacity: layer.opacity,
     transparent: true,
-    shininess: 8,
+    roughness: 0.7,
+    metalness: 0.0,
+    envMapIntensity: 0.2,
     side: THREE.FrontSide,
     depthWrite: false,
   })
@@ -77,11 +92,11 @@ export function updateLayerVisibility(meshes: LayerMeshes, visible: boolean) {
 
 export function updateLayerOpacity(meshes: LayerMeshes, opacity: number) {
   if (meshes.backFace) {
-    const mat = meshes.backFace.material as THREE.MeshPhongMaterial
+    const mat = meshes.backFace.material as THREE.MeshStandardMaterial
     mat.opacity = opacity
   }
   if (meshes.frontFace) {
-    const mat = meshes.frontFace.material as THREE.MeshPhongMaterial
+    const mat = meshes.frontFace.material as THREE.MeshStandardMaterial
     mat.opacity = opacity
   }
 }
