@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { VolumeData } from '../types/dicom'
 
 export type Phase = 'landing' | 'processing' | 'viewing'
 
@@ -27,6 +28,7 @@ interface AppState {
   layers: Record<string, LayerData>
   params: MeshParams
   cachedVolume: ArrayBuffer | null
+  volumeMeta: VolumeData | null
 
   setPhase: (phase: Phase) => void
   setProgress: (progress: ProgressInfo | null) => void
@@ -50,6 +52,7 @@ export const useAppStore = create<AppState>((set) => ({
   layers: {},
   params: DEFAULT_PARAMS,
   cachedVolume: null,
+  volumeMeta: null,
 
   setPhase: (phase) => set({ phase }),
   setProgress: (progress) => set({ progress }),
@@ -77,6 +80,7 @@ export const useAppStore = create<AppState>((set) => ({
       progress: null,
       layers: {},
       cachedVolume: null,
+      volumeMeta: null,
       params: DEFAULT_PARAMS,
     }),
 }))
