@@ -4,9 +4,10 @@ import './Landing.css'
 
 interface Props {
   onFilesSelected: (files: File[]) => void
+  onModelLoaded: (file: File) => void
 }
 
-export function Landing({ onFilesSelected }: Props) {
+export function Landing({ onFilesSelected, onModelLoaded }: Props) {
   const { t } = useTranslation('landing')
   const { t: tc } = useTranslation('common')
   const folderInputRef = useRef<HTMLInputElement>(null)
@@ -102,8 +103,8 @@ export function Landing({ onFilesSelected }: Props) {
             accept=".dicomdrift"
             hidden
             onChange={(e) => {
-              // TODO: Load saved model
-              console.log('Load saved:', e.target.files?.[0]?.name)
+              const file = e.target.files?.[0]
+              if (file) onModelLoaded(file)
             }}
           />
         </div>

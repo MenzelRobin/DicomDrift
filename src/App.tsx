@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore, DEFAULT_LAYER_CONFIGS } from './stores/useAppStore'
 import { parseFiles, assembleVolume, generateMesh, terminateWorkers } from './pipeline/pipeline'
+import { loadModel } from './io/loadModel'
 import type { DicomSlice, SeriesInfo } from './types/dicom'
 import { Landing } from './components/Landing'
 import { ProcessingOverlay } from './components/ProcessingOverlay'
@@ -91,6 +92,19 @@ export default function App() {
     }
   }
 
+  const handleModelLoaded = useCallback(async (file: File) => {
+    try {
+      const { layers, layerConfigs } = await loadModel(file)
+      useAppStore.getState().setLayers(layers)
+      if (layerConfigs) useAppStore.getState().setLayerConfigs(layerConfigs)
+      setPhase('viewing')
+    } catch (err) {
+      console.error('Failed to load model:', err)
+      alert(t('errorGeneric'))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleCancel = () => {
     setShowSeriesSelector(false)
     setParsedSlices(null)
@@ -102,7 +116,7 @@ export default function App() {
 
   return (
     <>
-      {phase === 'landing' && <Landing onFilesSelected={handleFiles} />}
+      {phase === 'landing' && <Landing onFilesSelected={handleFiles} onModelLoaded={handleModelLoaded} />}
 
       {phase === 'processing' && !showSeriesSelector && <ProcessingOverlay />}
 

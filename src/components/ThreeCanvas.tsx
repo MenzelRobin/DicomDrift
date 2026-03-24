@@ -8,6 +8,7 @@ export interface ThreeCanvasHandle {
   resetView: () => void
   setView: (name: string) => void
   getCanvas: () => HTMLCanvasElement | null
+  getSceneContext: () => import('../viewer/sceneSetup').SceneContext | null
 }
 
 interface Props {
@@ -68,6 +69,7 @@ export function ThreeCanvas({ onReady }: Props) {
         }
       },
       getCanvas: () => canvasRef.current,
+      getSceneContext: () => sceneRef.current,
     })
 
     const currentMeshMap = meshMapRef.current

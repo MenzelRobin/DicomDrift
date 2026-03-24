@@ -1,7 +1,11 @@
 import { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAppStore } from '../stores/useAppStore'
 import { ThreeCanvas, type ThreeCanvasHandle } from './ThreeCanvas'
 import { ControlPanel } from './ControlPanel'
+import { saveModel } from '../io/saveModel'
+import { exportSTL } from '../io/exportSTL'
+import { exportScreenshot } from '../io/exportScreenshot'
 import './Viewer.css'
 
 interface Props {
@@ -27,6 +31,21 @@ export function Viewer({ onLoadNew }: Props) {
     handleRef.current?.setView(name)
   }, [])
 
+  const onSave = useCallback(() => {
+    const { layers, layerConfigs } = useAppStore.getState()
+    saveModel(layers, layerConfigs)
+  }, [])
+
+  const onExportSTL = useCallback(() => {
+    const { layers } = useAppStore.getState()
+    exportSTL(layers)
+  }, [])
+
+  const onScreenshot = useCallback(() => {
+    const ctx = handleRef.current?.getSceneContext()
+    if (ctx) exportScreenshot(ctx.renderer, ctx.scene, ctx.camera)
+  }, [])
+
   return (
     <div className="viewer">
       <div className="viewer-topbar">
@@ -35,7 +54,14 @@ export function Viewer({ onLoadNew }: Props) {
 
       <ThreeCanvas onReady={onReady} />
 
-      <ControlPanel onResetView={onResetView} onSetView={onSetView} onLoadNew={onLoadNew} />
+      <ControlPanel
+        onResetView={onResetView}
+        onSetView={onSetView}
+        onSave={onSave}
+        onExportSTL={onExportSTL}
+        onScreenshot={onScreenshot}
+        onLoadNew={onLoadNew}
+      />
 
       <div className="viewer-hint">
         {isTouchDevice ? t('hintTouch') : t('hintMouse')}
