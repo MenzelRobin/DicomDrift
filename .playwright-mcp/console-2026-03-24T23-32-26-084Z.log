@@ -1,0 +1,4 @@
+[  356883ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/components/LayerConfigurator.tsx?t=1774395502899:0
+[  356884ms] [ERROR] [vite] Failed to reload /src/components/LayerConfigurator.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:904
+[  454077ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/components/LayerConfigurator.tsx?t=1774395600138:0
+[  454077ms] [ERROR] [vite] Failed to reload /src/components/LayerConfigurator.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:904

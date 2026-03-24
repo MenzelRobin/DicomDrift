@@ -330,6 +330,14 @@
   border: none;
 }
 
+/* ── Hint ── */
+.lc-hint {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 2px 0;
+}
+
 /* ── Toggle ── */
 .lc-toggle {
   display: flex;

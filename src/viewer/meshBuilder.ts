@@ -102,6 +102,13 @@ export function updateLayerOpacity(meshes: LayerMeshes, opacity: number) {
   }
 }
 
+export function updateLayerColor(meshes: LayerMeshes, color: string) {
+  const c = new THREE.Color(color)
+  if (meshes.opaque) (meshes.opaque.material as THREE.MeshStandardMaterial).color.copy(c)
+  if (meshes.backFace) (meshes.backFace.material as THREE.MeshStandardMaterial).color.copy(c)
+  if (meshes.frontFace) (meshes.frontFace.material as THREE.MeshStandardMaterial).color.copy(c)
+}
+
 export function addMeshesToPivot(pivot: THREE.Group, meshes: LayerMeshes) {
   if (meshes.opaque) pivot.add(meshes.opaque)
   if (meshes.backFace) pivot.add(meshes.backFace)

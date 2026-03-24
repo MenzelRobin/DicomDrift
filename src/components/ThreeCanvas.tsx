@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useAppStore } from '../stores/useAppStore'
 import { createScene, resizeRenderer, disposeScene, type SceneContext } from '../viewer/sceneSetup'
 import { createArcballState, attachControls, updateArcball, resetView, setView, fitToSphere, type ArcballState } from '../viewer/arcballControls'
-import { buildLayerMesh, removeMeshesFromParent, addMeshesToPivot, updateLayerVisibility, updateLayerOpacity, disposeMeshes, type LayerMeshes, type SharedCenterRef } from '../viewer/meshBuilder'
+import { buildLayerMesh, removeMeshesFromParent, addMeshesToPivot, updateLayerVisibility, updateLayerOpacity, updateLayerColor, disposeMeshes, type LayerMeshes, type SharedCenterRef } from '../viewer/meshBuilder'
 
 export interface ThreeCanvasHandle {
   resetView: () => void
@@ -137,6 +137,7 @@ export function ThreeCanvas({ onReady }: Props) {
       } else if (existing) {
         updateLayerVisibility(existing, layer.visible)
         updateLayerOpacity(existing, layer.opacity)
+        updateLayerColor(existing, layer.color)
       }
     }
   }, [layers])
