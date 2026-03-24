@@ -120,7 +120,10 @@ export function Landing({ onFilesSelected, onModelLoaded, cachedSession, onResum
             hidden
             onChange={(e) => {
               const file = e.target.files?.[0]
-              if (file) onModelLoaded(file)
+              if (file) {
+                onModelLoaded(file)
+                e.currentTarget.value = ''
+              }
             }}
           />
         </div>

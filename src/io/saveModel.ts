@@ -15,7 +15,7 @@ export function saveModel(
   const meta: DicomDriftMeta = {
     version: 1,
     layers: {},
-    layerConfigs,
+    layerConfigs: layerConfigs.map((c) => ({ ...c, generating: false })),
   }
 
   const zipFiles: Record<string, Uint8Array> = {}
