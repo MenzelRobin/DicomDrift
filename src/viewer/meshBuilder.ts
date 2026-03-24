@@ -9,14 +9,25 @@ export interface LayerMeshes {
   sharedGeometry?: THREE.BufferGeometry
 }
 
+// Shared center offset so all layers align to the same origin
+let sharedCenter: THREE.Vector3 | null = null
+
+export function resetSharedCenter() {
+  sharedCenter = null
+}
+
 export function buildLayerMesh(name: string, layer: LayerData): LayerMeshes {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(layer.vertices, 3))
   geometry.setIndex(new THREE.BufferAttribute(layer.indices, 1))
 
-  // Center geometry at origin so the pivot rotation works correctly
+  // Center all layers to the same origin (first layer determines the center)
   geometry.computeBoundingBox()
-  geometry.center()
+  if (!sharedCenter) {
+    sharedCenter = new THREE.Vector3()
+    geometry.boundingBox!.getCenter(sharedCenter)
+  }
+  geometry.translate(-sharedCenter.x, -sharedCenter.y, -sharedCenter.z)
   geometry.computeVertexNormals()
   geometry.computeBoundingSphere()
 

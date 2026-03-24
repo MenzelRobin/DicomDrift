@@ -1,0 +1,44 @@
+.vh-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vh-canvas {
+  width: 100%;
+  height: 48px;
+  border-radius: 4px;
+  cursor: crosshair;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--panel-border);
+  touch-action: none;
+}
+
+.vh-suggestions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.vh-suggest-btn {
+  padding: 2px 7px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--panel-border);
+  border-radius: 3px;
+  transition: all 0.12s;
+  letter-spacing: 0.02em;
+}
+
+.vh-suggest-btn:hover {
+  color: var(--text-secondary);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.vh-suggest-btn--active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(85, 102, 238, 0.08);
+}

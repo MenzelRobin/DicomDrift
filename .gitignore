@@ -35,3 +35,8 @@ Prototype-NNH-Viewer.html
 
 # OS
 Thumbs.db
+
+# Playwright screenshots
+viewer-*.png
+landing-*.png
+series-*.png

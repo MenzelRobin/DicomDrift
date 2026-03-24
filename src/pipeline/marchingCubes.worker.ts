@@ -6,7 +6,7 @@ export interface MarchingCubesMessage {
   dimensions: [number, number, number]
   spacing: [number, number, number]
   isoThreshold: number
-  resolution: 1 | 2 | 4
+  resolution: number
   smoothIterations: number
 }
 
