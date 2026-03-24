@@ -108,6 +108,7 @@ export function generateMesh(
   isoThreshold: number,
   resolution: number,
   smoothIterations: number,
+  invertNormals = true,
   progressRange?: { offset: number; scale: number },
 ): Promise<MeshResult> {
   const { setProgress } = useAppStore.getState()
@@ -139,6 +140,7 @@ export function generateMesh(
       isoThreshold,
       resolution,
       smoothIterations,
+      invertNormals,
     })
   })
 }
