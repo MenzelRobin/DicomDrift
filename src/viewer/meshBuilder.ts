@@ -3,8 +3,6 @@ import type { LayerData } from '../stores/useAppStore'
 
 export interface LayerMeshes {
   opaque?: THREE.Mesh
-  backFace?: THREE.Mesh
-  frontFace?: THREE.Mesh
   boundingSphere?: THREE.Sphere
   sharedGeometry?: THREE.BufferGeometry
 }
@@ -35,90 +33,52 @@ export function buildLayerMesh(name: string, layer: LayerData, centerRef?: Share
   const color = new THREE.Color(layer.color)
   const isTransparent = layer.opacity < 0.98
 
-  if (!isTransparent) {
-    const material = new THREE.MeshStandardMaterial({
-      color,
-      roughness: 0.65,
-      metalness: 0.05,
-      envMapIntensity: 0.4,
-      side: THREE.FrontSide,
-      depthWrite: true,
-    })
-    const mesh = new THREE.Mesh(geometry, material)
-    mesh.name = name
-    mesh.renderOrder = 0
-    mesh.visible = layer.visible
-    return { opaque: mesh, boundingSphere: geometry.boundingSphere ?? undefined, sharedGeometry: geometry }
-  }
-
-  // Transparent: share geometry between back and front passes (no clone needed)
-  const backMaterial = new THREE.MeshStandardMaterial({
+  // Front-side only — no back-face pass (back faces cause inside surfaces to show)
+  // depthWrite off for transparent layers so layers behind can show through
+  const material = new THREE.MeshStandardMaterial({
     color,
-    opacity: layer.opacity,
-    transparent: true,
-    roughness: 0.7,
-    metalness: 0.0,
-    envMapIntensity: 0.2,
-    side: THREE.BackSide,
-    depthWrite: false,
-  })
-  const backMesh = new THREE.Mesh(geometry, backMaterial)
-  backMesh.name = `${name}_back`
-  backMesh.renderOrder = 1
-  backMesh.visible = layer.visible
-
-  const frontMaterial = new THREE.MeshStandardMaterial({
-    color,
-    opacity: layer.opacity,
-    transparent: true,
-    roughness: 0.7,
-    metalness: 0.0,
-    envMapIntensity: 0.2,
+    roughness: 0.65,
+    metalness: 0.05,
+    envMapIntensity: 0.4,
     side: THREE.FrontSide,
-    depthWrite: false,
+    depthWrite: !isTransparent,
+    transparent: isTransparent,
+    opacity: layer.opacity,
   })
-  const frontMesh = new THREE.Mesh(geometry, frontMaterial)
-  frontMesh.name = `${name}_front`
-  frontMesh.renderOrder = 2
-  frontMesh.visible = layer.visible
-
-  return { backFace: backMesh, frontFace: frontMesh, boundingSphere: geometry.boundingSphere ?? undefined, sharedGeometry: geometry }
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.name = name
+  mesh.renderOrder = isTransparent ? 1 : 0
+  mesh.visible = layer.visible
+  return { opaque: mesh, boundingSphere: geometry.boundingSphere ?? undefined, sharedGeometry: geometry }
 }
 
 export function updateLayerVisibility(meshes: LayerMeshes, visible: boolean) {
   if (meshes.opaque) meshes.opaque.visible = visible
-  if (meshes.backFace) meshes.backFace.visible = visible
-  if (meshes.frontFace) meshes.frontFace.visible = visible
 }
 
 export function updateLayerOpacity(meshes: LayerMeshes, opacity: number) {
-  if (meshes.backFace) {
-    const mat = meshes.backFace.material as THREE.MeshStandardMaterial
+  if (meshes.opaque) {
+    const mat = meshes.opaque.material as THREE.MeshStandardMaterial
+    const wasTransparent = mat.transparent
+    const isTransparent = opacity < 0.98
     mat.opacity = opacity
-  }
-  if (meshes.frontFace) {
-    const mat = meshes.frontFace.material as THREE.MeshStandardMaterial
-    mat.opacity = opacity
+    mat.transparent = isTransparent
+    mat.depthWrite = !isTransparent
+    if (wasTransparent !== isTransparent) mat.needsUpdate = true
   }
 }
 
 export function updateLayerColor(meshes: LayerMeshes, color: string) {
   const c = new THREE.Color(color)
   if (meshes.opaque) (meshes.opaque.material as THREE.MeshStandardMaterial).color.copy(c)
-  if (meshes.backFace) (meshes.backFace.material as THREE.MeshStandardMaterial).color.copy(c)
-  if (meshes.frontFace) (meshes.frontFace.material as THREE.MeshStandardMaterial).color.copy(c)
 }
 
 export function addMeshesToPivot(pivot: THREE.Group, meshes: LayerMeshes) {
   if (meshes.opaque) pivot.add(meshes.opaque)
-  if (meshes.backFace) pivot.add(meshes.backFace)
-  if (meshes.frontFace) pivot.add(meshes.frontFace)
 }
 
 export function removeMeshesFromParent(meshes: LayerMeshes) {
   if (meshes.opaque) meshes.opaque.removeFromParent()
-  if (meshes.backFace) meshes.backFace.removeFromParent()
-  if (meshes.frontFace) meshes.frontFace.removeFromParent()
 }
 
 export function disposeMeshes(meshes: LayerMeshes) {
@@ -132,6 +92,4 @@ export function disposeMeshes(meshes: LayerMeshes) {
     else m.material.dispose()
   }
   if (meshes.opaque) disposeMaterial(meshes.opaque)
-  if (meshes.backFace) disposeMaterial(meshes.backFace)
-  if (meshes.frontFace) disposeMaterial(meshes.frontFace)
 }
