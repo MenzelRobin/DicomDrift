@@ -40,3 +40,4 @@ Thumbs.db
 viewer-*.png
 landing-*.png
 series-*.png
+.playwright-mcp/

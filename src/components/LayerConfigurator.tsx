@@ -51,11 +51,12 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
 interface LayerCardProps {
   config: LayerConfig
   hasGenerated: boolean
+  hasVolume: boolean
   onRegenerate: (config: LayerConfig) => void
   onRemove: (id: string) => void
 }
 
-function LayerCard({ config, hasGenerated, onRegenerate, onRemove }: LayerCardProps) {
+function LayerCard({ config, hasGenerated, hasVolume, onRegenerate, onRemove }: LayerCardProps) {
   const { t } = useTranslation('viewer')
   const [expanded, setExpanded] = useState(true)
   const updateConfig = useAppStore((s) => s.updateLayerConfig)
@@ -92,7 +93,13 @@ function LayerCard({ config, hasGenerated, onRegenerate, onRemove }: LayerCardPr
             input.type = 'color'
             input.value = config.color
             input.addEventListener('input', (e) => {
-              updateConfig(config.id, { color: (e.target as HTMLInputElement).value })
+              const color = (e.target as HTMLInputElement).value
+              updateConfig(config.id, { color })
+              // Live-update color on existing mesh
+              const store = useAppStore.getState()
+              if (store.layers[config.id]) {
+                store.setLayer(config.id, { ...store.layers[config.id], color })
+              }
             })
             input.click()
           }}
@@ -125,6 +132,7 @@ function LayerCard({ config, hasGenerated, onRegenerate, onRemove }: LayerCardPr
 
       {expanded && (
         <div className="lc-card-body">
+          {hasVolume && (
           <div className="lc-param">
             <div className="lc-param-header">
               <span className="lc-param-label">{t('threshold')}</span>
@@ -149,6 +157,7 @@ function LayerCard({ config, hasGenerated, onRegenerate, onRemove }: LayerCardPr
               onThresholdChange={(v) => updateConfig(config.id, { threshold: v })}
             />
           </div>
+          )}
 
           <div className="lc-param">
             <span className="lc-param-label">{t('opacity')}</span>
@@ -188,6 +197,8 @@ function LayerCard({ config, hasGenerated, onRegenerate, onRemove }: LayerCardPr
             </div>
           </div>
 
+          {hasVolume && (
+          <>
           <div className="lc-param">
             <span className="lc-param-label">{t('smoothing')}</span>
             <div className="lc-param-control">
@@ -240,6 +251,12 @@ function LayerCard({ config, hasGenerated, onRegenerate, onRemove }: LayerCardPr
               </>
             )}
           </button>
+          </>
+          )}
+
+          {!hasVolume && hasGenerated && (
+            <p className="lc-hint">Load DICOM data to modify threshold and smoothing</p>
+          )}
         </div>
       )}
     </div>
@@ -314,6 +331,7 @@ export function LayerConfigurator() {
     <div className="layer-configurator">
       <div className="lc-section-header">
         <h3 className="lc-title">{t('layers')}</h3>
+        {volumeMeta && (
         <div className="lc-add-wrap">
           <button
             className="lc-add-btn"
@@ -339,6 +357,7 @@ export function LayerConfigurator() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       <div className="lc-cards">
@@ -347,6 +366,7 @@ export function LayerConfigurator() {
             key={config.id}
             config={config}
             hasGenerated={!!layers[config.id]}
+            hasVolume={!!volumeMeta}
             onRegenerate={regenerateLayer}
             onRemove={removeLayerFull}
           />

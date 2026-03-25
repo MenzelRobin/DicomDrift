@@ -4,9 +4,12 @@ import './Landing.css'
 
 interface Props {
   onFilesSelected: (files: File[]) => void
+  onModelLoaded: (file: File) => void
+  cachedSession?: { timestamp: number } | null
+  onResumeSession?: () => void
 }
 
-export function Landing({ onFilesSelected }: Props) {
+export function Landing({ onFilesSelected, onModelLoaded, cachedSession, onResumeSession }: Props) {
   const { t } = useTranslation('landing')
   const { t: tc } = useTranslation('common')
   const folderInputRef = useRef<HTMLInputElement>(null)
@@ -61,6 +64,20 @@ export function Landing({ onFilesSelected }: Props) {
           <p className="subtitle">{t('subtitle')}</p>
         </header>
 
+        {cachedSession && onResumeSession && (
+          <button className="resume-btn glass" onClick={onResumeSession}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            <div className="resume-btn-text">
+              <span className="resume-btn-title">{t('resumeSession', { defaultValue: 'Resume last session' })}</span>
+              <span className="resume-btn-time">
+                {new Date(cachedSession.timestamp).toLocaleString()}
+              </span>
+            </div>
+          </button>
+        )}
+
         <div
           className={`dropzone glass ${isDragOver ? 'dropzone--active' : ''}`}
           onDrop={handleDrop}
@@ -102,8 +119,11 @@ export function Landing({ onFilesSelected }: Props) {
             accept=".dicomdrift"
             hidden
             onChange={(e) => {
-              // TODO: Load saved model
-              console.log('Load saved:', e.target.files?.[0]?.name)
+              const file = e.target.files?.[0]
+              if (file) {
+                onModelLoaded(file)
+                e.currentTarget.value = ''
+              }
             }}
           />
         </div>
