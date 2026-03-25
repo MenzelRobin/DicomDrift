@@ -26,14 +26,18 @@ export function saveModel(
       opacity: layer.opacity,
       visible: layer.visible,
     }
-    zipFiles[`${name}.vertices`] = new Uint8Array(layer.vertices.buffer)
-    zipFiles[`${name}.indices`] = new Uint8Array(layer.indices.buffer)
+    zipFiles[`${name}.vertices`] = new Uint8Array(
+      layer.vertices.buffer, layer.vertices.byteOffset, layer.vertices.byteLength,
+    )
+    zipFiles[`${name}.indices`] = new Uint8Array(
+      layer.indices.buffer, layer.indices.byteOffset, layer.indices.byteLength,
+    )
   }
 
   zipFiles['meta.json'] = strToU8(JSON.stringify(meta))
 
   const zipped = zipSync(zipFiles)
-  const blob = new Blob([zipped.buffer as ArrayBuffer], { type: 'application/octet-stream' })
+  const blob = new Blob([zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength) as ArrayBuffer], { type: 'application/octet-stream' })
 
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

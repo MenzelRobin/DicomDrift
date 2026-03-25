@@ -29,14 +29,14 @@ export default function App() {
       if (info.exists && info.timestamp) {
         setCachedSessionInfo({ timestamp: info.timestamp })
       }
-    })
+    }).catch(() => { /* IndexedDB unavailable */ })
   }, [])
 
   // Auto-save session when layers change (debounced)
   useEffect(() => {
     if (phase !== 'viewing' || Object.keys(layers).length === 0) return
     const timer = setTimeout(() => {
-      saveSession(layers, layerConfigs)
+      saveSession(layers, layerConfigs).catch(() => {})
     }, 1000)
     return () => clearTimeout(timer)
   }, [layers, layerConfigs, phase])
@@ -144,7 +144,7 @@ export default function App() {
     setProgress(null)
     setPhase('landing')
     terminateWorkers()
-    clearSession()
+    clearSession().catch(() => {})
   }
 
   return (

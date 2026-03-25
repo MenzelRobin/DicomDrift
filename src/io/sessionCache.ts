@@ -24,13 +24,13 @@ export async function saveSession(
   const serialized: CachedSession = {
     timestamp: Date.now(),
     layers: {},
-    layerConfigs,
+    layerConfigs: layerConfigs.map((c) => ({ ...c, generating: false })),
   }
 
   for (const [name, layer] of Object.entries(layers)) {
     serialized.layers[name] = {
-      vertices: layer.vertices.buffer.slice(0) as ArrayBuffer,
-      indices: layer.indices.buffer.slice(0) as ArrayBuffer,
+      vertices: layer.vertices.slice().buffer as ArrayBuffer,
+      indices: layer.indices.slice().buffer as ArrayBuffer,
       color: layer.color,
       opacity: layer.opacity,
       visible: layer.visible,
